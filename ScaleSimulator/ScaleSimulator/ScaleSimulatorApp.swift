@@ -629,7 +629,7 @@ struct ContentView: View {
                 .font(.headline)
 
             HStack {
-                Slider(value: $model.weightGrams, in: -10...2000, step: 0.1)
+                Slider(value: $model.weightGrams, in: -10...2000)
                     .controlSize(.small)
 
                 TextField("Weight", value: $model.weightGrams, format: .number.precision(.fractionLength(1)))
@@ -663,7 +663,7 @@ struct ContentView: View {
                 .font(.headline)
 
             HStack {
-                Slider(value: $model.flowRate, in: 0...15, step: 0.1)
+                Slider(value: $model.flowRate, in: 0...15)
                     .controlSize(.small)
 
                 TextField("Flow", value: $model.flowRate, format: .number.precision(.fractionLength(1)))
