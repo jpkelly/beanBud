@@ -183,8 +183,17 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     private(set) var displayFlow: Double = 0
 
     /// Called by slider callback — bypasses @Observable coalescing.
-    func setWeight(_ w: Double) { _weight = w }
-    func setFlow(_ f: Double) { _flow = f }
+    func setWeight(_ w: Double) {
+        _weight = w
+        setCount += 1
+        if setCount <= 3 { NSLog("[Set] weight = \(w)") }
+    }
+    func setFlow(_ f: Double) {
+        _flow = f
+        setCount += 1
+        if setCount <= 3 { NSLog("[Set] flow = \(f)") }
+    }
+    private var setCount = 0
 
     // MARK: - Display Polling
 
@@ -192,11 +201,18 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
 
     func startDisplayPolling() {
         stopDisplayPolling()
+        var pollCount = 0
         pollingTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
-                self.displayWeight = self._weight
-                self.displayFlow = self._flow
+                let w = self._weight
+                let f = self._flow
+                self.displayWeight = w
+                self.displayFlow = f
+                pollCount += 1
+                if pollCount <= 2 {
+                    NSLog("[Poll] #\(pollCount) w=\(w) f=\(f)")
+                }
             }
         }
     }
