@@ -9,12 +9,12 @@ struct WeightDisplayView: View {
             (Text(viewModel.displayWeight)
                 .font(.system(size: 80, weight: .thin, design: .default))
                 .monospacedDigit()
-                .contentTransition(.numericText())
             + Text(" \(viewModel.weightUnitSymbol)")
                 .font(.system(size: 36, weight: .medium, design: .default))
                 .foregroundStyle(.secondary)
                 .baselineOffset(20)
             )
+            .contentTransition(.numericText())
             .frame(maxWidth: .infinity, alignment: .center)
 
             // Stability indicator
