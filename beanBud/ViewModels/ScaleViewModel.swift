@@ -166,9 +166,15 @@ final class ScaleViewModel {
 
     private func startDisplayTimer() {
         stopDisplayTimer()
-        displayTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+        displayTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.brewTimer.tick()
+                // Sample current weight for graph every 0.1s while timer runs
+                if let reading = self?.currentReading {
+                    self?.weightHistory.append((elapsed: self?.brewTimer.elapsed ?? 0, weight: reading.grams))
+                } else {
+                    self?.weightHistory.append((elapsed: self?.brewTimer.elapsed ?? 0, weight: 0))
+                }
             }
         }
     }
@@ -188,16 +194,10 @@ extension ScaleViewModel: ScaleBLEControllerDelegate {
         didReceiveReading reading: BookooProtocol.WeightData
     ) {
         Task { @MainActor in
-            let wr = WeightReading(
+            self.currentReading = WeightReading(
                 grams: reading.weightGrams,
                 isStable: reading.isStable
             )
-            self.currentReading = wr
-
-            // Record data point while timer is running
-            if self.brewTimer.isRunning {
-                self.weightHistory.append((elapsed: self.brewTimer.elapsed, weight: wr.grams))
-            }
         }
     }
 
