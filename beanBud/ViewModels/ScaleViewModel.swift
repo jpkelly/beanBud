@@ -21,17 +21,15 @@ final class ScaleViewModel {
     /// Weight data points recorded while timer is running: (elapsed seconds, weight in grams).
     var weightHistory: [(elapsed: Double, weight: Double)] = []
 
-    /// Auto-stop timer settings.
-    var autoStopEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "autoStopEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "autoStopEnabled") }
+    /// Auto-stop timer settings — stored properties synced to UserDefaults.
+    var autoStopEnabled: Bool = UserDefaults.standard.bool(forKey: "autoStopEnabled") {
+        didSet { UserDefaults.standard.set(autoStopEnabled, forKey: "autoStopEnabled") }
     }
-    var autoStopSeconds: Double {
-        get {
-            let val = UserDefaults.standard.double(forKey: "autoStopSeconds")
-            return val > 0 ? val : 30
-        }
-        set { UserDefaults.standard.set(newValue, forKey: "autoStopSeconds") }
+    var autoStopSeconds: Double = {
+        let val = UserDefaults.standard.double(forKey: "autoStopSeconds")
+        return val > 0 ? val : 30
+    }() {
+        didSet { UserDefaults.standard.set(autoStopSeconds, forKey: "autoStopSeconds") }
     }
 
     /// Whether the graph should be visible.
