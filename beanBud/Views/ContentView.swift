@@ -13,24 +13,22 @@ struct ContentView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Top bar: connection status + battery + device picker
+                // Top bar
                 headerBar
+                    .padding(.bottom, 8)
 
                 Spacer()
 
-                // Weight display
+                // Weight display — main focal point
                 WeightDisplayView(viewModel: viewModel)
 
-                Spacer()
-
-                // Brew timer
+                // Timer and controls grouped below
                 BrewTimerView(viewModel: viewModel)
 
-                Spacer()
-
-                // Control buttons
                 ControlBarView(viewModel: viewModel)
-                    .padding(.bottom, 40)
+                    .padding(.top, 8)
+
+                Spacer()
             }
         }
         .sheet(isPresented: $showDevicePicker) {
