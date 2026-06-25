@@ -160,7 +160,7 @@ extension UInt16 {
 // MARK: - Simulator Model
 
 @Observable
-final class SimulatorModel: NSObject {
+final class SimulatorModel: NSObject, @unchecked Sendable {
     // State
     var isAdvertising = false
     var isConnected = false
@@ -287,7 +287,7 @@ final class SimulatorModel: NSObject {
 
     private func sendWeightNotification() {
         guard isConnected,
-              let central = connectedCentral else { return }
+              connectedCentral != nil else { return }
 
         let ms = UInt32(timerElapsed * 1000)
         let packet = BookooBLE.buildWeightPacket(
@@ -550,33 +550,27 @@ struct ContentView: View {
     // MARK: - Control Panel
 
     private var controlPanel: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Header + status
-                headerSection
+        VStack(alignment: .leading, spacing: 16) {
+            // Fixed section — always visible, no scroll gesture conflicts
+            headerSection
 
-                // Primary action: advertise
-                actionsSection
+            actionsSection
 
-                Divider()
+            weightSection
 
-                // Weight control
-                weightSection
+            flowSection
 
-                Divider()
+            Divider()
 
-                // Flow rate control
-                flowSection
+            // Scrollable section
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    settingsSection
 
-                Divider()
+                    Divider()
 
-                // Battery + Timer
-                settingsSection
-
-                Divider()
-
-                // Mode picker
-                modeSection
+                    modeSection
+                }
             }
         }
     }
