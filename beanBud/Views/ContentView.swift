@@ -56,10 +56,25 @@ struct ContentView: View {
     // MARK: - Header Bar
 
     private var headerBar: some View {
-        HStack {
+        HStack(spacing: 8) {
             connectionStatusPill
 
             Spacer()
+
+            // Scale battery
+            if viewModel.batteryPercent > 0 {
+                HStack(spacing: 2) {
+                    Image(systemName: viewModel.batteryIcon)
+                        .font(.caption)
+                    Text("\(viewModel.batteryPercent)%")
+                        .font(.caption)
+                }
+                .foregroundStyle(viewModel.batteryPercent <= 10 ? .red : .secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+            }
 
             Button {
                 showSettings = true
