@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Brew timer display — shows elapsed time with start/stop/reset controls.
+/// Brew timer display — elapsed time + play/stop/reset + Tare all in one row.
 struct BrewTimerView: View {
     @Bindable var viewModel: ScaleViewModel
 
@@ -12,7 +12,7 @@ struct BrewTimerView: View {
                 .monospacedDigit()
                 .foregroundStyle(viewModel.brewTimer.isRunning ? Color.orange : Color.secondary)
 
-            // Timer controls
+            // Controls row: Reset | Play/Stop | Tare
             HStack(spacing: 24) {
                 // Reset
                 Button {
@@ -35,6 +35,21 @@ struct BrewTimerView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(viewModel.brewTimer.isRunning ? .red : .orange)
+
+                // Tare
+                Button {
+                    viewModel.tare()
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: "scalemass")
+                            .font(.title2)
+                        Text("Tare")
+                            .font(.caption)
+                    }
+                    .frame(width: 60, height: 60)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.secondary)
             }
         }
         .padding()

@@ -8,25 +8,19 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            // Background
             Color(.systemGroupedBackground)
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Top bar
                 headerBar
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
 
                 Spacer()
 
-                // Weight display — main focal point
                 WeightDisplayView(viewModel: viewModel)
 
-                // Timer and controls grouped below
                 BrewTimerView(viewModel: viewModel)
-
-                ControlBarView(viewModel: viewModel)
-                    .padding(.top, 8)
 
                 Spacer()
             }
@@ -46,12 +40,10 @@ struct ContentView: View {
 
     private var headerBar: some View {
         HStack {
-            // Connection status pill
             connectionStatusPill
 
             Spacer()
 
-            // Settings gear
             Button {
                 showSettings = true
             } label: {
@@ -64,8 +56,6 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
     }
 
     private var connectionStatusPill: some View {
