@@ -201,21 +201,24 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
 
     func startDisplayPolling() {
         stopDisplayPolling()
-        var pollCount = 0
         pollingTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
                 let w = self._weight
                 let f = self._flow
+                let changed = w != self.displayWeight || f != self.displayFlow
                 self.displayWeight = w
                 self.displayFlow = f
-                pollCount += 1
-                if pollCount <= 2 {
-                    NSLog("[Poll] #\(pollCount) w=\(w) f=\(f)")
+                if changed {
+                    self.pollChangeCount += 1
+                    if self.pollChangeCount <= 5 {
+                        NSLog("[Poll] changed: w=\(w) f=\(f)")
+                    }
                 }
             }
         }
     }
+    private var pollChangeCount = 0
 
     func stopDisplayPolling() {
         pollingTimer?.invalidate()
