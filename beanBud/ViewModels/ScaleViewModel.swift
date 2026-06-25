@@ -18,6 +18,14 @@ final class ScaleViewModel {
     var brewTimer = BrewTimerState()
     var lastError: String?
 
+    /// Weight data points recorded while timer is running: (elapsed seconds, weight in grams).
+    var weightHistory: [(elapsed: Double, weight: Double)] = []
+
+    /// Whether the graph should be visible.
+    var showGraph: Bool {
+        brewTimer.isRunning || weightHistory.count > 1
+    }
+
     // MARK: - Computed
 
     var displayWeight: String {
@@ -145,6 +153,7 @@ final class ScaleViewModel {
 
     func resetTimer() {
         brewTimer.reset()
+        weightHistory.removeAll()
         stopDisplayTimer()
         bleController.sendResetTimer()
     }
@@ -179,10 +188,16 @@ extension ScaleViewModel: ScaleBLEControllerDelegate {
         didReceiveReading reading: BookooProtocol.WeightData
     ) {
         Task { @MainActor in
-            self.currentReading = WeightReading(
+            let wr = WeightReading(
                 grams: reading.weightGrams,
                 isStable: reading.isStable
             )
+            self.currentReading = wr
+
+            // Record data point while timer is running
+            if self.brewTimer.isRunning {
+                self.weightHistory.append((elapsed: self.brewTimer.elapsed, weight: wr.grams))
+            }
         }
     }
 

@@ -22,6 +22,7 @@
 		7961687A205A97356FB9D1C0 /* background.png in Resources */ = {isa = PBXBuildFile; fileRef = FE3AB2682A461EB11A97A211 /* background.png */; };
 		8DB524DCA2523B7B75CE9F03 /* BrewTimerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60B752DCF56C79FE94D40D3 /* BrewTimerState.swift */; };
 		923968F26DB071F37BF637FF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EEBD817AAF8332B3E2F7AC6B /* Assets.xcassets */; };
+		9C128FEFC3DBED54E073E6EE /* WeightGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B67259E82368A423E012C3F6 /* WeightGraphView.swift */; };
 		B26F08657ECE0655B3A444FD /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B2D2DCF8E32917A5DF47B38 /* Color+Hex.swift */; };
 		C02F354D36AA05264438742B /* DeviceDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D075316CC2458F62145C19 /* DeviceDiscoveryView.swift */; };
 		C08D6ABB648FEFC4F1CA9814 /* WeightReading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4078853FB6BF07C5AF9C64C7 /* WeightReading.swift */; };
@@ -40,9 +41,10 @@
 		9BCB93D5A3E29C53F03B5544 /* BrewTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewTimerView.swift; sourceTree = "<group>"; };
 		A79FE3E029EA7B748BDE5DE7 /* ControlBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlBarView.swift; sourceTree = "<group>"; };
 		B60B752DCF56C79FE94D40D3 /* BrewTimerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewTimerState.swift; sourceTree = "<group>"; };
+		B67259E82368A423E012C3F6 /* WeightGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightGraphView.swift; sourceTree = "<group>"; };
 		BB43073FB730A6F8F9C36C24 /* splash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = splash.png; sourceTree = "<group>"; };
 		DA5D99F0301C8E2D5CE39228 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		E1CCAFD231608A3CC82AF005 /* beanBud.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = beanBud.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1CCAFD231608A3CC82AF005 /* beanBud.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = beanBud.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E6B08D834CA3839CABB9538C /* ScaleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaleViewModel.swift; sourceTree = "<group>"; };
 		E9915A5D20DDAD92E3E342F2 /* BookooProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookooProtocol.swift; sourceTree = "<group>"; };
 		EEBD817AAF8332B3E2F7AC6B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -107,6 +109,7 @@
 				90D075316CC2458F62145C19 /* DeviceDiscoveryView.swift */,
 				89B659FD0D9A95F9E0D05E9B /* SettingsView.swift */,
 				98BE90F74773FCBD83D11A57 /* WeightDisplayView.swift */,
+				B67259E82368A423E012C3F6 /* WeightGraphView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -174,6 +177,8 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = 5E2D806EF2C0C7A841317C0E /* Build configuration list for PBXProject "beanBud" */;
 			developmentRegion = en;
@@ -248,6 +253,7 @@
 				5CEC65330AE581F6D561857D /* ScaleViewModel.swift in Sources */,
 				2DD65A17377858FDC0BA1F7B /* SettingsView.swift in Sources */,
 				769AC0797ECFC38DA66E53F5 /* WeightDisplayView.swift in Sources */,
+				9C128FEFC3DBED54E073E6EE /* WeightGraphView.swift in Sources */,
 				C08D6ABB648FEFC4F1CA9814 /* WeightReading.swift in Sources */,
 				24365FA7044FFB91E3A2D2D1 /* WeightUnit.swift in Sources */,
 			);
@@ -325,7 +331,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = UFWV49P4TN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = beanBud/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -345,7 +350,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = UFWV49P4TN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = beanBud/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
