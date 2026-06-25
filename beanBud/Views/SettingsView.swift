@@ -31,7 +31,7 @@ struct SettingsView: View {
                             Text("s")
                                 .foregroundStyle(.secondary)
                         }
-                        Slider(value: $viewModel.autoStopSeconds, in: 5...120, step: 5) {
+                        Slider(value: $viewModel.autoStopSeconds, in: 5...120, step: 1) {
                             Text("Seconds")
                         }
                     }
