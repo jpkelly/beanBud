@@ -8,8 +8,15 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            Color(uiColor: .darkGray)
-                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(white: 0.25),
+                    Color(white: 0.08)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 headerBar
