@@ -19,6 +19,7 @@
 		73ECD3435CAA3A5F5F2D95B6 /* ControlBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A79FE3E029EA7B748BDE5DE7 /* ControlBarView.swift */; };
 		769AC0797ECFC38DA66E53F5 /* WeightDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98BE90F74773FCBD83D11A57 /* WeightDisplayView.swift */; };
 		7929CC2D2A75997F6416BD35 /* BrewTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BCB93D5A3E29C53F03B5544 /* BrewTimerView.swift */; };
+		7961687A205A97356FB9D1C0 /* background.png in Resources */ = {isa = PBXBuildFile; fileRef = FE3AB2682A461EB11A97A211 /* background.png */; };
 		8DB524DCA2523B7B75CE9F03 /* BrewTimerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60B752DCF56C79FE94D40D3 /* BrewTimerState.swift */; };
 		923968F26DB071F37BF637FF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EEBD817AAF8332B3E2F7AC6B /* Assets.xcassets */; };
 		B26F08657ECE0655B3A444FD /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B2D2DCF8E32917A5DF47B38 /* Color+Hex.swift */; };
@@ -48,12 +49,14 @@
 		F082C78B9E91613E0435C02E /* ScaleBLEController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaleBLEController.swift; sourceTree = "<group>"; };
 		F627D0A157D963275FA7A2F1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		F83D9F50C398D89F4C7BCE34 /* ScaleReading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaleReading.swift; sourceTree = "<group>"; };
+		FE3AB2682A461EB11A97A211 /* background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = background.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		30439BC879A3A328991FC36A /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				FE3AB2682A461EB11A97A211 /* background.png */,
 				1A34130118CE497DE6AA27FA /* icon.png */,
 				DA5D99F0301C8E2D5CE39228 /* Info.plist */,
 				BB43073FB730A6F8F9C36C24 /* splash.png */,
@@ -199,6 +202,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				923968F26DB071F37BF637FF /* Assets.xcassets in Resources */,
+				7961687A205A97356FB9D1C0 /* background.png in Resources */,
 				630DA2E72279A628CD96E507 /* icon.png in Resources */,
 				278F94EF1537415513358C8F /* splash.png in Resources */,
 			);
