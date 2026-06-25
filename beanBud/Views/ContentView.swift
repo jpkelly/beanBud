@@ -8,13 +8,29 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
+            // Base: 5-stop premium coffee gradient
             LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.30, green: 0.18, blue: 0.10),
-                    Color(red: 0.04, green: 0.03, blue: 0.02)
-                ]),
+                colors: [
+                    Color(hex: "0C0908"),
+                    Color(hex: "1A100C"),
+                    Color(hex: "2A180F"),
+                    Color(hex: "1B110D"),
+                    Color(hex: "090707")
+                ],
                 startPoint: .top,
                 endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            // Subtle copper radial glow behind the scale
+            RadialGradient(
+                colors: [
+                    Color(hex: "5A2F16").opacity(0.12),
+                    Color.clear
+                ],
+                center: .center,
+                startRadius: 0,
+                endRadius: UIScreen.main.bounds.width * 0.35
             )
             .ignoresSafeArea()
 
