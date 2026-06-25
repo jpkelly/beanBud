@@ -1,0 +1,59 @@
+# BeanBud ☕
+
+An iOS app that turns your **Bookoo Mini Scale** into a dedicated coffee brewing companion — real-time weight display, brew timer, and tare controls over Bluetooth.
+
+## Features
+
+- **BLE connection** to Bookoo Mini Scale (official protocol)
+- **Live weight display** — grams or ounces, large readable digits
+- **Brew timer** — start/stop/reset with 0.1s precision
+- **Tare & Brew button** — one tap to zero the scale and start the timer
+- **Stability indicator** — shows when weight settles
+- **Battery level** from the scale
+
+## Screens
+
+| Weight Display | Brew Timer | Device Picker |
+|---------------|------------|---------------|
+| Large weight + unit | Elapsed time + controls | Scan & connect to nearby scales |
+
+## Requirements
+
+- iOS 18.0+
+- Xcode 16.0+
+- A Bookoo Mini Scale (or compatible BLE scale)
+
+## Install on Your iPhone (no App Store, no developer account)
+
+1. Open `beanBud.xcodeproj` in Xcode
+2. Plug in your iPhone, select it from the device dropdown
+3. Sign in with your Apple ID (Xcode → Settings → Accounts)
+4. Press **⌘R** to build and install
+5. On iPhone: Settings → General → VPN & Device Management → Trust your Apple ID
+
+The app stays installed for 7 days — just rebuild to refresh.
+
+## How It Works
+
+BeanBud communicates with the Bookoo Mini Scale over Bluetooth Low Energy using the [official open-source protocol](https://github.com/BooKooCode/OpenSource):
+
+- **Service UUID**: `0xFFE0`
+- **Weight notifications**: characteristic `0xFF11` (20-byte packets with grams, flow rate, battery, timer)
+- **Commands**: characteristic `0xFF12` (tare, timer start/stop/reset)
+
+## Project Structure
+
+```
+beanBud/
+├── App/              # @main app entry
+├── BLE/              # BookooProtocol + ScaleBLEController
+├── Models/           # WeightReading, WeightUnit, BrewTimerState
+├── ViewModels/       # ScaleViewModel (@Observable state)
+├── Views/            # ContentView, WeightDisplay, BrewTimer, Controls, DeviceDiscovery
+├── Resources/        # Info.plist (BLE permissions)
+└── Assets.xcassets/  # App icon, accent color
+```
+
+## License
+
+MIT

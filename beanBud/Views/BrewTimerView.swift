@@ -1,0 +1,42 @@
+import SwiftUI
+
+/// Brew timer display — shows elapsed time with start/stop/reset controls.
+struct BrewTimerView: View {
+    @Bindable var viewModel: ScaleViewModel
+
+    var body: some View {
+        VStack(spacing: 12) {
+            // Timer digits
+            Text(viewModel.brewTimer.elapsedFormatted)
+                .font(.system(size: 48, weight: .thin, design: .monospaced))
+                .monospacedDigit()
+                .foregroundStyle(viewModel.brewTimer.isRunning ? Color.orange : Color.secondary)
+
+            // Timer controls
+            HStack(spacing: 24) {
+                // Reset
+                Button {
+                    viewModel.resetTimer()
+                } label: {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.title3)
+                        .frame(width: 44, height: 44)
+                }
+                .tint(.secondary)
+                .disabled(viewModel.brewTimer.elapsed == 0)
+
+                // Start / Stop
+                Button {
+                    viewModel.toggleTimer()
+                } label: {
+                    Image(systemName: viewModel.brewTimer.isRunning ? "stop.fill" : "play.fill")
+                        .font(.title2)
+                        .frame(width: 60, height: 60)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(viewModel.brewTimer.isRunning ? .red : .orange)
+            }
+        }
+        .padding()
+    }
+}
