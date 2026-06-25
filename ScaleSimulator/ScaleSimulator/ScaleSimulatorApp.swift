@@ -548,8 +548,16 @@ struct ContentView: View {
     private var controlPanel: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // Header
+                // Header + status
                 headerSection
+
+                // Primary action: advertise
+                actionsSection
+
+                Divider()
+
+                // Quick presets
+                presetsSection
 
                 Divider()
 
@@ -570,16 +578,6 @@ struct ContentView: View {
 
                 // Mode picker
                 modeSection
-
-                Divider()
-
-                // Presets
-                presetsSection
-
-                Divider()
-
-                // Actions
-                actionsSection
             }
         }
     }
