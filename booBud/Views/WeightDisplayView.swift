@@ -22,16 +22,16 @@ struct WeightDisplayView: View {
             }
 
             // Stability indicator
-            if let reading = viewModel.currentReading {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(reading.isStable ? Color.green : Color.orange)
-                        .frame(width: 6, height: 6)
-                    Text(reading.isStable ? "Stable" : "Measuring")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(viewModel.currentReading?.isStable == true ? Color.green : Color.orange)
+                    .frame(width: 6, height: 6)
+                Text(viewModel.currentReading?.isStable == true ? "Stable" : "Measuring")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 60, alignment: .leading)
             }
+            .opacity(viewModel.currentReading == nil ? 0 : 1)
         }
         .padding(.horizontal)
         .padding(.top)
