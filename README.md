@@ -1,4 +1,4 @@
-# BeanBud ☕
+# BeanBud ☕ by DeepSeek
 
 An iOS app that turns your **Bookoo Mini Scale** into a dedicated coffee brewing companion — real-time weight display, brew timer, and tare controls over Bluetooth.
 
