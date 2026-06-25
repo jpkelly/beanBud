@@ -179,8 +179,8 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     var flowRate: Double { _flow }
 
     /// Polled display copies — updated at 20fps for smooth UI.
-    private(set) var displayWeight: Double = 0
-    private(set) var displayFlow: Double = 0
+    var displayWeight: Double = 0
+    var displayFlow: Double = 0
 
     /// Called by slider callback — bypasses @Observable coalescing.
     func setWeight(_ w: Double) {
