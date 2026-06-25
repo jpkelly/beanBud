@@ -252,7 +252,7 @@ final class SimulatorModel: NSObject {
 
         peripheralManager.startAdvertising([
             CBAdvertisementDataLocalNameKey: BookooBLE.advertisedName,
-            CBAdvertisementDataServiceUUIDsKey: [CBUUID(string: BookooBLE.fullServiceUUID)],
+            CBAdvertisementDataServiceUUIDsKey: [BookooBLE.serviceUUID],
         ])
 
         isAdvertising = true
