@@ -156,10 +156,18 @@ extension ScaleBLEController: CBCentralManagerDelegate {
         advertisementData: [String: Any],
         rssi RSSI: NSNumber
     ) {
-        // Only report devices within range
-        guard RSSI.compare(rssiThreshold) == .orderedDescending else { return }
+        // Log EVERY discovery for debugging — name + services + RSSI
+        let name = peripheral.name ?? "unnamed"
+        let services = (advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID])?.map(\.uuidString) ?? []
+        let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? ""
+        logger.info("🔍 Discovered: name='\(name)' localName='\(localName)' services=\(services) RSSI=\(RSSI)")
 
-        logger.debug("Discovered: \(peripheral.name ?? "unnamed") RSSI: \(RSSI)")
+        // Only report devices within range
+        guard RSSI.compare(rssiThreshold) == .orderedDescending else {
+            logger.info("⏭️ Filtered out (RSSI < \(self.rssiThreshold)): \(name)")
+            return
+        }
+
         delegate?.scaleController(self, didDiscoverScale: peripheral, rssi: RSSI)
     }
 
