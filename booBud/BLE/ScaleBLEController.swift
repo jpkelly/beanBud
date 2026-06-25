@@ -124,6 +124,10 @@ final class ScaleBLEController: NSObject {
     func sendResetTimer() {
         sendCommand(BookooProtocol.resetTimerCommand())
     }
+
+    func sendMode(_ mode: BookooProtocol.ScaleMode) {
+        sendCommand(BookooProtocol.switchModeCommand(mode))
+    }
 }
 
 // MARK: - CBCentralManagerDelegate

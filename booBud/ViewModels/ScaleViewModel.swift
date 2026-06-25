@@ -32,6 +32,17 @@ final class ScaleViewModel {
         didSet { UserDefaults.standard.set(autoStopSeconds, forKey: "autoStopSeconds") }
     }
 
+    /// Scale operating mode — persisted to UserDefaults, sent to scale on change.
+    var scaleMode: BookooProtocol.ScaleMode = {
+        let raw = UserDefaults.standard.integer(forKey: "scaleMode")
+        return BookooProtocol.ScaleMode(rawValue: UInt8(raw)) ?? .weight
+    }() {
+        didSet {
+            UserDefaults.standard.set(Int(scaleMode.rawValue), forKey: "scaleMode")
+            bleController.sendMode(scaleMode)
+        }
+    }
+
     /// Whether the graph should be visible.
     var showGraph: Bool {
         brewTimer.isRunning || weightHistory.count > 1

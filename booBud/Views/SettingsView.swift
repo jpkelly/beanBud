@@ -18,6 +18,16 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                 }
 
+                Section("Scale Mode") {
+                    Picker("Mode", selection: $viewModel.scaleMode) {
+                        ForEach(BookooProtocol.ScaleMode.allCases, id: \.rawValue) { mode in
+                            Text(mode.label)
+                                .tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 Section("Auto-Stop Timer") {
                     Toggle("Auto-stop", isOn: $viewModel.autoStopEnabled)
                     if viewModel.autoStopEnabled {

@@ -36,6 +36,29 @@ enum BookooProtocol {
         case resetTimer       = 0x06
         case tareAndStartTimer = 0x07
         case flowSmoothing    = 0x08
+        case calibration      = 0x09
+        case switchMode       = 0x0A
+        case stopCondition    = 0x0B
+    }
+
+    // MARK: - Scale Modes
+
+    /// Operating modes of the Bookoo scale (Ultra series).
+    /// Inferred from protocol notes — command 0x0A is the mode switch.
+    enum ScaleMode: UInt8, CaseIterable {
+        case weight    = 0x00  /// Basic weighing
+        case timing    = 0x01  /// Brew timer
+        case ratio     = 0x02  /// Brew ratio
+        case automatic = 0x03  /// Auto-stop detection
+
+        var label: String {
+            switch self {
+            case .weight:    return "Weight"
+            case .timing:    return "Timer"
+            case .ratio:     return "Ratio"
+            case .automatic: return "Auto"
+            }
+        }
     }
 
     // MARK: - Checksum
@@ -92,6 +115,11 @@ enum BookooProtocol {
     /// Convenience: Reset the brew timer to zero.
     static func resetTimerCommand() -> Data {
         buildCommand(.resetTimer)
+    }
+
+    /// Convenience: Switch the scale's operating mode.
+    static func switchModeCommand(_ mode: ScaleMode) -> Data {
+        buildCommand(.switchMode, data1: mode.rawValue)
     }
 
     // MARK: - Weight Data Decoding
