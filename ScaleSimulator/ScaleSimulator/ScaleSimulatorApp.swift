@@ -181,6 +181,11 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     var logMessages: [LogEntry] = []
     var notificationInterval: Double = 0.1  // 100ms default
 
+    /// Version tokens bumped on programmatic weight/flow changes so
+    /// ContinuousSlider knobs reflect external updates (Tare, commands).
+    var weightVersion = 0
+    var flowVersion = 0
+
     // Presets
     var presetWeights: [Preset] = [
         Preset(name: "Empty", weight: 0),
@@ -316,6 +321,7 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
         switch cmd {
         case .tare:
             weightGrams = 0
+            weightVersion &+= 1
             log("⬅️ Tare → weight = 0")
 
         case .beep:
@@ -345,6 +351,8 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
         case .tareAndStartTimer:
             weightGrams = 0
             flowRate = 0
+            weightVersion &+= 1
+            flowVersion &+= 1
             timerRunning = true
             timerElapsed = 0
             timerStartDate = Date()
@@ -525,42 +533,46 @@ struct LogEntry: Identifiable {
 
 // MARK: - Continuous Slider
 
-/// NSSlider wrapper with `isContinuous = true`. Uses value comparison
-/// to avoid resetting the knob position during drag (SwiftUI batches
-/// updateNSView calls asynchronously, so boolean flags don't work).
+/// NSSlider that reports every drag tick via callback. Uses a version token
+/// to force position updates for programmatic changes (e.g. Tare button).
 struct ContinuousSlider: NSViewRepresentable {
-    @Binding var value: Double
+    let value: Double       // current value (for programmatic updates only)
     let range: ClosedRange<Double>
+    let version: Int        // increment to force knob update from outside
+    let onChanged: (Double) -> Void
 
     func makeNSView(context: Context) -> NSSlider {
         let slider = NSSlider(value: value, minValue: range.lowerBound, maxValue: range.upperBound, target: context.coordinator, action: #selector(Coordinator.changed(_:)))
         slider.isContinuous = true
         slider.controlSize = .small
+        context.coordinator.lastProgrammaticValue = value
         return slider
     }
 
     func updateNSView(_ nsView: NSSlider, context: Context) {
-        // Only move the knob if the value changed from outside the slider
-        // (e.g. Tare button). During drag, sliderValue == value, so skip.
-        if abs(context.coordinator.sliderValue - value) > 0.01 {
+        // Only move knob when version changes (programmatic update like Tare)
+        if version != context.coordinator.lastVersion {
             nsView.doubleValue = value
-            context.coordinator.sliderValue = value
+            context.coordinator.lastProgrammaticValue = value
+            context.coordinator.lastVersion = version
         }
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(value: $value)
+        Coordinator(onChanged: onChanged)
     }
 
     final class Coordinator: NSObject {
-        var value: Binding<Double>
-        var sliderValue: Double = 0
+        let onChanged: (Double) -> Void
+        var lastVersion = 0
+        var lastProgrammaticValue: Double = 0
 
-        init(value: Binding<Double>) { self.value = value }
+        init(onChanged: @escaping (Double) -> Void) {
+            self.onChanged = onChanged
+        }
 
         @MainActor @objc func changed(_ sender: NSSlider) {
-            sliderValue = sender.doubleValue
-            value.wrappedValue = sender.doubleValue
+            onChanged(sender.doubleValue)
         }
     }
 }
@@ -662,7 +674,9 @@ struct ContentView: View {
                 .font(.headline)
 
             HStack {
-                ContinuousSlider(value: $model.weightGrams, range: -10...50)
+                ContinuousSlider(value: model.weightGrams, range: -10...50, version: model.weightVersion) { newValue in
+                    model.weightGrams = newValue
+                }
 
                 TextField("Weight", value: $model.weightGrams, format: .number.precision(.fractionLength(1)))
                     .frame(width: 70)
@@ -695,7 +709,9 @@ struct ContentView: View {
                 .font(.headline)
 
             HStack {
-                ContinuousSlider(value: $model.flowRate, range: 0...15)
+                ContinuousSlider(value: model.flowRate, range: 0...15, version: model.flowVersion) { newValue in
+                    model.flowRate = newValue
+                }
 
                 TextField("Flow", value: $model.flowRate, format: .number.precision(.fractionLength(1)))
                     .frame(width: 70)
@@ -823,6 +839,7 @@ struct ContentView: View {
             HStack(spacing: 8) {
                 Button {
                     model.weightGrams = 0
+                    model.weightVersion &+= 1
                     model.log("🎯 Manual Tare")
                 } label: {
                     Label("Tare", systemImage: "arrow.down.to.line")
@@ -832,6 +849,7 @@ struct ContentView: View {
 
                 Button {
                     model.flowRate = 0
+                    model.flowVersion &+= 1
                     model.log("🎯 Stop Flow")
                 } label: {
                     Label("Stop Flow", systemImage: "pause.circle")
