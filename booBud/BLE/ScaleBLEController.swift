@@ -30,6 +30,9 @@ final class ScaleBLEController: NSObject {
     /// Minimum RSSI threshold to filter out distant devices.
     private let rssiThreshold: NSNumber = -80
 
+    /// Whether scanning was requested before Bluetooth was ready.
+    private var pendingScan = false
+
     // MARK: - Init
 
     override init() {
@@ -48,20 +51,22 @@ final class ScaleBLEController: NSObject {
 
     // MARK: - Public API
 
-    /// Start scanning for Bookoo scales. Requires Bluetooth to be powered on.
+    /// Start scanning for Bookoo scales. Defers until Bluetooth is powered on if needed.
     func startScanning() {
         guard ScaleBLEController.isBluetoothAvailable else {
             logger.info("Simulator detected — BLE not available, skipping scan")
             return
         }
         guard centralManager.state == .poweredOn else {
-            logger.warning("Cannot scan — Bluetooth state is \(String(describing: self.centralManager.state))")
+            logger.info("Bluetooth not ready (state: \(String(describing: self.centralManager.state))), will scan when powered on")
+            pendingScan = true
             return
         }
         guard !isScanning else { return }
 
         isScanning = true
-        logger.info("Scanning for Bookoo scales (service: \(BookooProtocol.serviceUUID.uuidString))")
+        pendingScan = false
+        logger.info("Scanning for Bookoo scales (all devices)")
 
         centralManager.scanForPeripherals(
             withServices: nil,
@@ -138,12 +143,18 @@ extension ScaleBLEController: CBCentralManagerDelegate {
         logger.info("Bluetooth state: \(String(describing: central.state.rawValue))")
         switch central.state {
         case .poweredOn:
-            // Auto-start scanning if we were previously connected
+            // Auto-start scanning if it was requested before Bluetooth was ready
+            if pendingScan {
+                logger.info("Bluetooth now powered on — starting deferred scan")
+                startScanning()
+            }
+            // Auto-reconnect if we were previously connected
             if connectedPeripheral != nil {
                 central.connect(connectedPeripheral!, options: nil)
             }
         case .poweredOff, .resetting:
             isConnected = false
+            isScanning = false
             delegate?.scaleController(self, didChangeConnectionState: false)
         default:
             break
