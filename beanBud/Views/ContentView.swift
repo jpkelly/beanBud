@@ -61,8 +61,9 @@ struct ContentView: View {
 
             Spacer()
 
-            // Scale battery (temporarily always shown for layout review)
-            HStack(spacing: 2) {
+            // Scale battery (only shown when scale reports battery data)
+            if viewModel.batteryPercent > 0 {
+                HStack(spacing: 2) {
                     Image(systemName: viewModel.batteryIcon)
                         .font(.caption)
                     Text("\(viewModel.batteryPercent)%")
@@ -73,6 +74,7 @@ struct ContentView: View {
                 .padding(.vertical, 4)
                 .background(.ultraThinMaterial)
                 .clipShape(Capsule())
+            }
 
             Button {
                 showSettings = true
