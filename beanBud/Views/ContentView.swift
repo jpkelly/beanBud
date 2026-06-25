@@ -30,18 +30,14 @@ struct ContentView: View {
 
                 BrewTimerView(viewModel: viewModel)
 
-                // Real-time weight graph — appears when timer is running
-                if viewModel.showGraph {
-                    WeightGraphView(data: viewModel.weightHistory, displayUnit: viewModel.displayUnit)
-                        .frame(height: 160)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 4)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
+                // Real-time weight graph — always visible
+                WeightGraphView(data: viewModel.weightHistory, displayUnit: viewModel.displayUnit)
+                    .frame(height: 160)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
 
                 Spacer()
             }
-            .animation(.easeInOut(duration: 0.3), value: viewModel.showGraph)
         }
         .sheet(isPresented: $showDevicePicker) {
             DeviceDiscoveryView(viewModel: viewModel)

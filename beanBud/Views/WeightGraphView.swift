@@ -1,84 +1,118 @@
 import SwiftUI
 
-/// Real-time weight vs time line chart for the brewing process.
+/// Real-time weight vs time line chart with axes, grid, and labels.
 struct WeightGraphView: View {
     let data: [(elapsed: Double, weight: Double)]
     let displayUnit: WeightUnit
 
+    private let yTickCount = 4
+    private let xTickCount = 4
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // Y-axis label (max weight)
-            if let maxW = maxWeight {
-                Text(formatWeight(maxW))
-                    .font(.caption2)
+        VStack(spacing: 0) {
+            // Title
+            HStack {
+                Text("Weight")
+                    .font(.caption)
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
-                    .padding(.leading, 4)
+                Text("(\(displayUnit.symbol))")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Text("Time (s)")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
             }
+            .padding(.horizontal, 8)
+            .padding(.top, 6)
+            .padding(.bottom, 4)
 
             GeometryReader { geometry in
-                Path { path in
-                    guard data.count > 1 else { return }
-                    let w = geometry.size.width
-                    let h = geometry.size.height
-                    let maxT = maxTime
-                    let minW = minWeight ?? 0
-                    let rangeW = (maxWeight ?? 1) - minW
-                    let rangeWClamped = max(rangeW, 0.1)
+                let w = geometry.size.width
+                let h = geometry.size.height
+                let yAxisWidth: CGFloat = 42
+                let xAxisHeight: CGFloat = 18
+                let plotLeft = yAxisWidth
+                let plotTop: CGFloat = 0
+                let plotWidth = w - plotLeft
+                let plotHeight = h - xAxisHeight
+                let maxT = effectiveMaxTime
+                let maxW = effectiveMaxWeight
+                let rangeW = max(0.1, maxW)
 
-                    for (i, point) in data.enumerated() {
-                        let x = w * (maxT > 0 ? point.elapsed / maxT : 0)
-                        let y = h * (1 - (point.weight - minW) / rangeWClamped)
-                        let pt = CGPoint(x: x, y: y)
-                        if i == 0 {
-                            path.move(to: pt)
-                        } else {
-                            path.addLine(to: pt)
+                ZStack(alignment: .topLeading) {
+                    // Grid lines
+                    ForEach(0..<yTickCount, id: \.self) { i in
+                        let y = plotTop + plotHeight * CGFloat(i) / CGFloat(yTickCount - 1)
+                        Path { path in
+                            path.move(to: CGPoint(x: plotLeft, y: y))
+                            path.addLine(to: CGPoint(x: plotLeft + plotWidth, y: y))
+                        }
+                        .stroke(.secondary.opacity(0.15), lineWidth: 0.5)
+                    }
+
+                    // Y-axis labels
+                    ForEach(0..<yTickCount, id: \.self) { i in
+                        let value = maxW * Double(yTickCount - 1 - i) / Double(yTickCount - 1)
+                        let y = plotTop + plotHeight * CGFloat(i) / CGFloat(yTickCount - 1)
+                        Text(displayUnit.format(value))
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                            .position(x: yAxisWidth / 2, y: y)
+                    }
+
+                    // X-axis labels
+                    ForEach(0..<xTickCount, id: \.self) { i in
+                        let value = maxT * Double(i) / Double(xTickCount - 1)
+                        let x = plotLeft + plotWidth * CGFloat(i) / CGFloat(xTickCount - 1)
+                        Text(formatTime(value))
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                            .position(x: x, y: plotTop + plotHeight + xAxisHeight / 2)
+                    }
+
+                    // Data line
+                    Path { path in
+                        guard data.count > 1 else { return }
+                        for (i, point) in data.enumerated() {
+                            let x = plotLeft + plotWidth * (maxT > 0 ? point.elapsed / maxT : 0)
+                            let y = plotTop + plotHeight * (1 - point.weight / rangeW)
+                            let pt = CGPoint(x: x, y: y)
+                            if i == 0 { path.move(to: pt) }
+                            else { path.addLine(to: pt) }
                         }
                     }
-                }
-                .stroke(
-                    LinearGradient(
-                        colors: [.orange, .orange.opacity(0.6)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
-                )
-            }
+                    .stroke(.orange, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
 
-            // X-axis label (time)
-            HStack {
-                Text("0s")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(formatTime(maxTime))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    // Axis lines
+                    Path { path in
+                        path.move(to: CGPoint(x: plotLeft, y: plotTop + plotHeight))
+                        path.addLine(to: CGPoint(x: plotLeft + plotWidth, y: plotTop + plotHeight))
+                    }
+                    .stroke(.secondary.opacity(0.5), lineWidth: 0.5)
+
+                    Path { path in
+                        path.move(to: CGPoint(x: plotLeft, y: plotTop))
+                        path.addLine(to: CGPoint(x: plotLeft, y: plotTop + plotHeight))
+                    }
+                    .stroke(.secondary.opacity(0.5), lineWidth: 0.5)
+                }
             }
-            .padding(.horizontal, 4)
         }
-        .padding(8)
-        .background(.ultraThinMaterial.opacity(0.3))
+        .padding(4)
+        .background(.ultraThinMaterial.opacity(0.2))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    // MARK: - Helpers
-
-    private var maxTime: Double {
-        data.last?.elapsed ?? 0
+    private var effectiveMaxTime: Double {
+        max(data.last?.elapsed ?? 30, 30)
     }
 
-    private var maxWeight: Double? {
-        data.map(\.weight).max()
-    }
-
-    private var minWeight: Double? {
-        data.map(\.weight).min()
-    }
-
-    private func formatWeight(_ grams: Double) -> String {
-        displayUnit.format(grams)
+    private var effectiveMaxWeight: Double {
+        let dataMax = data.map(\.weight).max() ?? 0
+        return max(dataMax, 1.0)
     }
 
     private func formatTime(_ seconds: Double) -> String {
