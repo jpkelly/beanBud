@@ -168,6 +168,14 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     var peripheralManager: CBPeripheralManager!
 
     // Simulated scale state
+    /// Target values — set by sliders (commit on release). Animated toward smoothly.
+    var targetWeight: Double = 0.0 {
+        didSet { startAnimation() }
+    }
+    var targetFlow: Double = 0.0 {
+        didSet { startAnimation() }
+    }
+    /// Display values — smoothly animated, used for display and BLE packets.
     var weightGrams: Double = 0.0
     var flowRate: Double = 0.0
     var batteryPercent: Double = 85
@@ -197,6 +205,7 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     private var dataTimer: Timer?
     private var displayTimer: Timer?
     private var timerStartDate: Date?
+    private var animationTimer: Timer?
 
     // Logger
     private let logger = Logger(subsystem: "com.boobud.simulator", category: "Simulator")
@@ -266,7 +275,51 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
         isConnected = false
         connectedCentral = nil
         stopDataTimer()
+        stopAnimation()
         log("🛑 Stopped advertising")
+    }
+
+    // MARK: - Weight Animation
+
+    /// Smoothly animates weightGrams/flowRate toward targetWeight/targetFlow.
+    private func startAnimation() {
+        guard animationTimer == nil else { return }  // already running
+        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.animationTick()
+            }
+        }
+    }
+
+    private func stopAnimation() {
+        animationTimer?.invalidate()
+        animationTimer = nil
+    }
+
+    private func animationTick() {
+        let speed: Double = 300  // grams per second animation speed
+        let step = speed * 0.016
+
+        // Animate weight
+        let wDiff = targetWeight - weightGrams
+        if abs(wDiff) < step {
+            weightGrams = targetWeight
+        } else {
+            weightGrams += (wDiff > 0 ? step : -step)
+        }
+
+        // Animate flow rate
+        let fDiff = targetFlow - flowRate
+        if abs(fDiff) < step {
+            flowRate = targetFlow
+        } else {
+            flowRate += (fDiff > 0 ? step : -step)
+        }
+
+        // Stop timer when both values have settled
+        if weightGrams == targetWeight && flowRate == targetFlow {
+            stopAnimation()
+        }
     }
 
     // MARK: - Data Sending
@@ -314,7 +367,7 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     private func handleCommand(_ cmd: BookooBLE.Command, data1: UInt8, data2: UInt8) {
         switch cmd {
         case .tare:
-            weightGrams = 0
+            targetWeight = 0
             log("⬅️ Tare → weight = 0")
 
         case .beep:
@@ -342,7 +395,8 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
             log("⬅️ Reset Timer")
 
         case .tareAndStartTimer:
-            weightGrams = 0
+            targetWeight = 0
+            targetFlow = 0
             timerRunning = true
             timerElapsed = 0
             timerStartDate = Date()
@@ -526,10 +580,6 @@ struct LogEntry: Identifiable {
 struct ContentView: View {
     @Bindable var model: SimulatorModel
 
-    // Local state for continuous slider updates (macOS Slider batches @Observable bindings)
-    @State private var sliderWeight: Double = 0
-    @State private var sliderFlow: Double = 0
-
     var body: some View {
         GeometryReader { geometry in
             HStack(spacing: 0) {
@@ -622,16 +672,10 @@ struct ContentView: View {
                 .font(.headline)
 
             HStack {
-                Slider(value: $sliderWeight, in: -10...2000)
+                Slider(value: $model.targetWeight, in: -10...2000)
                     .controlSize(.small)
-                    .onChange(of: sliderWeight) { _, newValue in
-                        model.weightGrams = newValue
-                    }
-                    .onAppear {
-                        sliderWeight = model.weightGrams
-                    }
 
-                TextField("Weight", value: $model.weightGrams, format: .number.precision(.fractionLength(1)))
+                TextField("Weight", value: $model.targetWeight, format: .number.precision(.fractionLength(1)))
                     .frame(width: 70)
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.trailing)
@@ -662,16 +706,10 @@ struct ContentView: View {
                 .font(.headline)
 
             HStack {
-                Slider(value: $sliderFlow, in: 0...15)
+                Slider(value: $model.targetFlow, in: 0...15)
                     .controlSize(.small)
-                    .onChange(of: sliderFlow) { _, newValue in
-                        model.flowRate = newValue
-                    }
-                    .onAppear {
-                        sliderFlow = model.flowRate
-                    }
 
-                TextField("Flow", value: $model.flowRate, format: .number.precision(.fractionLength(1)))
+                TextField("Flow", value: $model.targetFlow, format: .number.precision(.fractionLength(1)))
                     .frame(width: 70)
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.trailing)
@@ -798,7 +836,7 @@ struct ContentView: View {
 
             HStack(spacing: 8) {
                 Button {
-                    model.weightGrams = 0
+                    model.targetWeight = 0
                     model.log("🎯 Manual Tare")
                 } label: {
                     Label("Tare", systemImage: "arrow.down.to.line")
@@ -807,7 +845,7 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
 
                 Button {
-                    model.flowRate = 0
+                    model.targetFlow = 0
                     model.log("🎯 Stop Flow")
                 } label: {
                     Label("Stop Flow", systemImage: "pause.circle")
