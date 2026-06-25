@@ -8,10 +8,18 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            Image("AppBackground")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .ignoresSafeArea()
+            LinearGradient(
+                colors: [
+                    Color(hex: "0C0908"),
+                    Color(hex: "1A100C"),
+                    Color(hex: "2A180F"),
+                    Color(hex: "1B110D"),
+                    Color(hex: "090707")
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 headerBar
