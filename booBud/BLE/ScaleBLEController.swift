@@ -64,7 +64,7 @@ final class ScaleBLEController: NSObject {
         logger.info("Scanning for Bookoo scales (service: \(BookooProtocol.serviceUUID.uuidString))")
 
         centralManager.scanForPeripherals(
-            withServices: [BookooProtocol.serviceUUID],
+            withServices: nil,
             options: [CBCentralManagerScanOptionAllowDuplicatesKey: false]
         )
     }
