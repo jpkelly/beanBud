@@ -10,11 +10,11 @@ struct ContentView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(hex: "1A1410"),
-                    Color(hex: "2E1F16"),
-                    Color(hex: "3D2418"),
-                    Color(hex: "2A1C14"),
-                    Color(hex: "100D0B")
+                    Color(hex: "130E0C"),
+                    Color(hex: "241711"),
+                    Color(hex: "331E13"),
+                    Color(hex: "221610"),
+                    Color(hex: "0C0A09")
                 ],
                 startPoint: .top,
                 endPoint: .bottom
