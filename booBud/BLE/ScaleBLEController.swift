@@ -233,9 +233,6 @@ extension ScaleBLEController: CBCentralManagerDelegate {
             discoveredNames[id] = rawPeripheralName
         }
 
-        // Log all ad data keys to see what macOS actually sends
-        logger.info("🔍 best='\(bestName)' RSSI=\(RSSI) adKeys=\(advertisementData.keys.map { "\($0)" }) localName='\(localName)' raw='\(rawPeripheralName)'")
-
         // Only show devices whose name starts with "BOOKOO"
         let matchesPrefix = bestName.hasPrefix(BookooProtocol.advertisedNamePrefix)
         guard matchesPrefix else { return }
