@@ -197,7 +197,9 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     var flowRate: Double = 0.0 {
         didSet { if flowRate != oldValue { sendWeightNotification() } }
     }
-    var batteryPercent: Double = 85
+    var batteryPercent: Double = 85 {
+        didSet { if batteryPercent != oldValue { sendWeightNotification() } }
+    }
     var unit: WeightUnit = .grams
     var mode: BookooBLE.ScaleMode = .weight
     var timerRunning = false
