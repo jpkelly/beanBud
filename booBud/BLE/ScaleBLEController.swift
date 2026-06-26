@@ -91,6 +91,7 @@ final class ScaleBLEController: NSObject {
 
     /// Try to reconnect to a previously saved peripheral by UUID.
     func reconnectToLastDevice(uuid: UUID, name: String) {
+        guard !isReconnecting else { return }
         guard ScaleBLEController.isBluetoothAvailable,
               centralManager.state == .poweredOn else {
             pendingReconnectUUID = uuid
@@ -98,6 +99,7 @@ final class ScaleBLEController: NSObject {
             return
         }
 
+        isReconnecting = true
         let peripherals = centralManager.retrievePeripherals(withIdentifiers: [uuid])
         if let peripheral = peripherals.first {
             logger.info("Reconnecting to last device: \(name)")
@@ -108,12 +110,14 @@ final class ScaleBLEController: NSObject {
             logger.info("Last device not in cache, falling back to scan")
             pendingReconnectUUID = nil
             pendingReconnectName = nil
+            isReconnecting = false
             startScanning()
         }
     }
 
     private var pendingReconnectUUID: UUID?
     private var pendingReconnectName: String?
+    private var isReconnecting = false
 
     /// Disconnect from the current peripheral.
     func disconnect() {
@@ -215,6 +219,7 @@ extension ScaleBLEController: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         logger.info("Connected to \(peripheral.name ?? "unknown")")
         isConnected = true
+        isReconnecting = false
         connectedPeripheral = peripheral
         peripheral.delegate = self
         peripheral.discoverServices([BookooProtocol.serviceUUID])
