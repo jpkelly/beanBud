@@ -255,6 +255,7 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     private var dataTimer: Timer?
     private var displayTimer: Timer?
     private var timerStartDate: Date?
+    private var failCount = 0
     // Logger
     private let logger = Logger(subsystem: "com.boobud.simulator", category: "Simulator")
 
@@ -354,7 +355,10 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
             unit: unit == .grams ? 0x01 : 0x02
         )
 
-        peripheralManager.updateValue(packet, for: weightCharacteristic, onSubscribedCentrals: nil)
+        if !peripheralManager.updateValue(packet, for: weightCharacteristic, onSubscribedCentrals: nil) {
+            failCount += 1
+            if failCount <= 5 { NSLog("[BLE] queue full (fail #\(failCount))") }
+        }
     }
 
     // MARK: - Command Handling
