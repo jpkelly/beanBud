@@ -24,7 +24,7 @@ enum BookooBLE {
     nonisolated(unsafe) static let commandCharUUID = CBUUID(string: "FF12")
     nonisolated(unsafe) static let weightCharUUID = CBUUID(string: "FF11")
     static let fullServiceUUID = "0000FFE0-0000-1000-8000-00805F9B34FB"
-    static let advertisedName = "BOOKOO Mini Sim"
+    static let advertisedName = "BOOKOO Sim"  // macOS uses hostname; this is for reference
 
     // Packet constants
     static let productNumber: UInt8 = 0x03
@@ -353,13 +353,17 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
         // Setup GATT services (needed for characteristics to work)
         setupService()
 
-        // Start advertising — local name only, service UUID handled by GATT
         peripheralManager.startAdvertising([
             CBAdvertisementDataLocalNameKey: BookooBLE.advertisedName,
+            CBAdvertisementDataServiceUUIDsKey: [BookooBLE.serviceUUID],
         ])
 
         isAdvertising = true
-        log("📡 Started advertising as \"\(BookooBLE.advertisedName)\"")
+        if let hostName = Host.current().localizedName {
+            log("📡 Advertising as \"\(hostName)\" (macOS uses computer name)")
+        } else {
+            log("📡 Started advertising")
+        }
     }
 
     private func stopAdvertising() {
