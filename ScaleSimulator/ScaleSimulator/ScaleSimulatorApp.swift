@@ -235,8 +235,10 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
         let elapsed = Date().timeIntervalSince(pourStartTime)
         let t = min(elapsed / pourDuration, 1.0)
         let amount = pourCurve.progress(t) * pourTarget
-        weightGrams = pourStartWeight + amount
+
+        // Set flow first so didSet sends packet with correct flow rate
         flowRate = t < 1.0 ? (pourTarget / pourDuration) * (pourCurve.progress(t + 0.05) - pourCurve.progress(t)) / 0.05 : 0
+        weightGrams = pourStartWeight + amount
 
         if t >= 1.0 {
             stopPour()
