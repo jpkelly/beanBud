@@ -543,18 +543,14 @@ struct ContentView: View {
 
     private var controlPanel: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Fixed section — always visible, no scroll gesture conflicts
             headerSection
 
             actionsSection
 
             weightSection
 
-            flowSection
-
             Divider()
 
-            // Scrollable section
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     settingsSection
@@ -625,29 +621,6 @@ struct ContentView: View {
                     .font(.body.monospacedDigit())
 
                 Text(model.unit.symbol)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    // MARK: Flow Section
-
-    private var flowSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("Flow Rate", systemImage: "water.waves")
-                .font(.headline)
-
-            HStack {
-                Slider(value: $model.flowRate, in: 0...15)
-                    .controlSize(.small)
-
-                TextField("Flow", value: $model.flowRate, format: .number.precision(.fractionLength(1)))
-                    .frame(width: 70)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.trailing)
-                    .font(.body.monospacedDigit())
-
-                Text("g/s")
                     .foregroundStyle(.secondary)
             }
         }
@@ -759,25 +732,14 @@ struct ContentView: View {
             .controlSize(.large)
             .tint(model.isAdvertising ? .red : .green)
 
-            HStack(spacing: 8) {
-                Button {
-                    model.weightGrams = 0
-                    model.log("🎯 Manual Tare")
-                } label: {
-                    Label("Tare", systemImage: "arrow.down.to.line")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
-                Button {
-                    model.flowRate = 0
-                    model.log("🎯 Stop Flow")
-                } label: {
-                    Label("Stop Flow", systemImage: "pause.circle")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
+            Button {
+                model.weightGrams = 0
+                model.log("🎯 Manual Tare")
+            } label: {
+                Label("Tare", systemImage: "arrow.down.to.line")
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.bordered)
         }
     }
 
