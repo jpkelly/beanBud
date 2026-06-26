@@ -333,6 +333,7 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
                 self?.sendWeightNotification()
             }
         }
+        NSLog("[Timer] BLE data timer started, interval=\(notificationInterval)")
     }
 
     func stopDataTimer() {
@@ -340,9 +341,13 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
         dataTimer = nil
     }
 
+    private var sendCount = 0
+    private var failCount = 0
+
     private func sendWeightNotification() {
         guard isConnected, connectedCentral != nil else { return }
 
+        sendCount += 1
         let ms = UInt32(timerElapsed * 1000)
         let packet = BookooBLE.buildWeightPacket(
             milliseconds: ms,
@@ -354,8 +359,15 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
 
         if peripheralManager.updateValue(packet, for: weightCharacteristic, onSubscribedCentrals: nil) {
             needsFlush = false
+            if sendCount <= 3 || sendCount % 100 == 0 {
+                NSLog("[BLE] sent #\(sendCount) w=\(weightGrams) f=\(flowRate)")
+            }
         } else {
             needsFlush = true
+            failCount += 1
+            if failCount <= 3 {
+                NSLog("[BLE] queue full (fail #\(failCount))")
+            }
         }
     }
 
