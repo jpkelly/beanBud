@@ -257,6 +257,7 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     private var dataTimer: Timer?
     private var displayTimer: Timer?
     private var timerStartDate: Date?
+    private var pktCount = 0
 
     // Logger
     private let logger = Logger(subsystem: "com.boobud.simulator", category: "Simulator")
@@ -356,6 +357,17 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
             flowRate: flowRate,
             batteryPercent: UInt8(batteryPercent),
             unit: unit == .grams ? 0x01 : 0x02
+        )
+
+        pktCount += 1
+        if pktCount <= 3 || pktCount % 50 == 0 {
+            NSLog("[BLE] packet #\(pktCount) weight=\(weightGrams) flow=\(flowRate)")
+        }
+
+        let didSend = peripheralManager.updateValue(
+            packet,
+            for: weightCharacteristic,
+            onSubscribedCentrals: nil
         )
 
         let didSend = peripheralManager.updateValue(
@@ -645,15 +657,7 @@ struct ContentView: View {
     @State private var sliderFlow: Double = 0
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Debug: proves @State is updating the view
-            Text("DEBUG sliderWeight=\(sliderWeight, specifier: "%.2f")")
-                .font(.caption)
-                .foregroundStyle(.red)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-
-            GeometryReader { geometry in
+        GeometryReader { geometry in
             HStack(spacing: 0) {
                 // Left panel: Controls
                 controlPanel
