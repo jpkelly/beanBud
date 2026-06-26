@@ -29,14 +29,10 @@ struct BrewTimerView: View {
                 Button {
                     viewModel.tare()
                 } label: {
-                    VStack(spacing: 4) {
-                        Text("T")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text("Tare")
-                            .font(.caption)
-                    }
-                    .frame(width: 72, height: 64)
+                    Text("T")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .frame(width: 72, height: 64)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.secondary)
