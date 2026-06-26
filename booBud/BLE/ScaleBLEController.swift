@@ -91,8 +91,11 @@ final class ScaleBLEController: NSObject {
 
     /// Reconnect to a known peripheral by UUID without scanning.
     func reconnectToLastDevice(uuid: UUID) {
-        guard ScaleBLEController.isBluetoothAvailable,
-              centralManager.state == .poweredOn else { return }
+        guard ScaleBLEController.isBluetoothAvailable else { return }
+        guard centralManager.state == .poweredOn else {
+            pendingReconnectUUID = uuid
+            return
+        }
 
         let peripherals = centralManager.retrievePeripherals(withIdentifiers: [uuid])
         guard let peripheral = peripherals.first else {
@@ -104,6 +107,8 @@ final class ScaleBLEController: NSObject {
         peripheral.delegate = self
         centralManager.connect(peripheral, options: nil)
     }
+
+    private var pendingReconnectUUID: UUID?
 
     /// Disconnect from the current peripheral.
     func disconnect() {
@@ -163,6 +168,10 @@ extension ScaleBLEController: CBCentralManagerDelegate {
             if pendingScan {
                 logger.info("Bluetooth now powered on — starting deferred scan")
                 startScanning()
+            }
+            if let uuid = pendingReconnectUUID {
+                pendingReconnectUUID = nil
+                reconnectToLastDevice(uuid: uuid)
             }
             // Auto-reconnect if we were previously connected
             if connectedPeripheral != nil {
