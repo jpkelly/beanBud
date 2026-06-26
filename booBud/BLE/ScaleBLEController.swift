@@ -33,6 +33,10 @@ final class ScaleBLEController: NSObject {
     /// Whether scanning was requested before Bluetooth was ready.
     private var pendingScan = false
 
+    /// Per-identifier cached display name, so we never downgrade to peripheral.name
+    /// after a good LocalName is received from a scan-response packet.
+    private var discoveredNames: [UUID: String] = [:]
+
     // MARK: - Init
 
     override init() {
@@ -68,9 +72,12 @@ final class ScaleBLEController: NSObject {
         pendingScan = false
         logger.info("Scanning for Bookoo scales…")
 
+        // Allow duplicates so scan-response packets (carrying the local name)
+        // are delivered even when the primary ADV already matched withServices.
+        discoveredNames.removeAll()
         centralManager.scanForPeripherals(
             withServices: [BookooProtocol.serviceUUID],
-            options: [CBCentralManagerScanOptionAllowDuplicatesKey: false]
+            options: [CBCentralManagerScanOptionAllowDuplicatesKey: true]
         )
     }
 
@@ -78,6 +85,7 @@ final class ScaleBLEController: NSObject {
     func stopScanning() {
         guard isScanning else { return }
         isScanning = false
+        discoveredNames.removeAll()
         centralManager.stopScan()
         logger.info("Stopped scanning")
     }
@@ -192,19 +200,36 @@ extension ScaleBLEController: CBCentralManagerDelegate {
         advertisementData: [String: Any],
         rssi RSSI: NSNumber
     ) {
-        let name = peripheral.name ?? ""
+        let rawPeripheralName = peripheral.name ?? ""
         let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? ""
-        let displayName = localName.isEmpty ? name : localName
+
+        // Accumulate best name per peripheral:
+        // — prefer a non-empty LocalName from ad data (scan-response)
+        // — never downgrade from a known good name to peripheral.name (macOS hostname)
+        let id = peripheral.identifier
+        let freshName = localName.isEmpty ? nil : localName
+        let cachedName = discoveredNames[id]
+        let bestName: String
+        if let fresh = freshName {
+            bestName = fresh
+            discoveredNames[id] = fresh
+        } else if let cached = cachedName {
+            bestName = cached
+        } else {
+            // First sighting with no localName — use peripheral.name as fallback
+            bestName = rawPeripheralName
+            discoveredNames[id] = rawPeripheralName
+        }
 
         // Log all ad data keys to see what macOS actually sends
-        logger.info("🔍 '\(displayName)' RSSI=\(RSSI) adKeys=\(advertisementData.keys.map { "\($0)" }) localName='\(localName)'")
+        logger.info("🔍 best='\(bestName)' RSSI=\(RSSI) adKeys=\(advertisementData.keys.map { "\($0)" }) localName='\(localName)' raw='\(rawPeripheralName)'")
 
         // Only show devices whose name starts with "BOOKOO"
-        let matchesPrefix = displayName.hasPrefix(BookooProtocol.advertisedNamePrefix)
+        let matchesPrefix = bestName.hasPrefix(BookooProtocol.advertisedNamePrefix)
         guard matchesPrefix else { return }
         guard RSSI.compare(rssiThreshold) == .orderedDescending else { return }
 
-        delegate?.scaleController(self, didDiscoverScale: peripheral, localName: displayName, rssi: RSSI)
+        delegate?.scaleController(self, didDiscoverScale: peripheral, localName: bestName, rssi: RSSI)
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
