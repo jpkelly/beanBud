@@ -249,9 +249,8 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     private var dataTimer: Timer?
     private var displayTimer: Timer?
     private var timerStartDate: Date?
-
-    /// True when updateValue failed and we have a fresher value to retry.
-    private var needsFlush = false
+    private var sendCount = 0
+    private var failCount = 0
 
     // Logger
     private let logger = Logger(subsystem: "com.boobud.simulator", category: "Simulator")
@@ -341,9 +340,6 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
         dataTimer = nil
     }
 
-    private var sendCount = 0
-    private var failCount = 0
-
     private func sendWeightNotification() {
         guard isConnected, connectedCentral != nil else { return }
 
@@ -357,23 +353,13 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
             unit: unit == .grams ? 0x01 : 0x02
         )
 
-        if peripheralManager.updateValue(packet, for: weightCharacteristic, onSubscribedCentrals: nil) {
-            needsFlush = false
-            if sendCount <= 3 || sendCount % 100 == 0 {
-                NSLog("[BLE] sent #\(sendCount) w=\(weightGrams) f=\(flowRate)")
-            }
-        } else {
-            needsFlush = true
+        let ok = peripheralManager.updateValue(packet, for: weightCharacteristic, onSubscribedCentrals: nil)
+        if !ok {
             failCount += 1
-            if failCount <= 3 {
-                NSLog("[BLE] queue full (fail #\(failCount))")
-            }
+            if failCount <= 5 { NSLog("[BLE] queue full (fail #\(failCount))") }
+        } else if sendCount <= 3 || sendCount % 100 == 0 {
+            NSLog("[BLE] sent #\(sendCount) w=\(weightGrams)")
         }
-    }
-
-    private func flushIfNeeded() {
-        guard needsFlush else { return }
-        sendWeightNotification()
     }
 
     // MARK: - Command Handling
@@ -553,11 +539,7 @@ extension SimulatorModel: CBPeripheralManagerDelegate {
         }
     }
 
-    nonisolated func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
-        Task { @MainActor in
-            flushIfNeeded()
-        }
-    }
+    nonisolated func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {}
 }
 
 // MARK: - Types
