@@ -25,7 +25,7 @@ enum BookooBLE {
     nonisolated(unsafe) static let weightCharUUID = CBUUID(string: "FF11")
     nonisolated(unsafe) static let nameCharUUID = CBUUID(string: "FF1E")
     static let fullServiceUUID = "0000FFE0-0000-1000-8000-00805F9B34FB"
-    static let advertisedName = "BOOKOO Sim"  // macOS uses hostname; this is for reference
+    static let advertisedName = "BOOKOO Mini"  // macOS uses hostname; this is for reference
 
     // Packet constants
     static let productNumber: UInt8 = 0x03
