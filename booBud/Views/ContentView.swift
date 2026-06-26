@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var viewModel = ScaleViewModel()
     @State private var showDevicePicker = false
     @State private var showSettings = false
+    @State private var splashOpacity: Double = 1
 
     var body: some View {
         ZStack {
@@ -41,6 +42,20 @@ struct ContentView: View {
 
                 Spacer()
             }
+
+            // Splash overlay — matches launch screen, dismisses on connect or after 1s
+            if splashOpacity > 0 {
+                Color.black
+                    .ignoresSafeArea()
+                    .overlay {
+                        Image("SplashImage")
+                            .resizable()
+                            .scaledToFit()
+                            .ignoresSafeArea()
+                    }
+                    .opacity(splashOpacity)
+                    .allowsHitTesting(splashOpacity > 0.01)
+            }
         }
         .sheet(isPresented: $showDevicePicker) {
             DeviceDiscoveryView(viewModel: viewModel)
@@ -50,6 +65,29 @@ struct ContentView: View {
         }
         .onAppear {
             viewModel.startScanning()
+            scheduleSplashDismissal()
+        }
+        .onChange(of: viewModel.connectionState) { _, newState in
+            if case .connected = newState {
+                dismissSplash()
+            }
+        }
+    }
+
+    // MARK: - Splash
+
+    private func dismissSplash() {
+        withAnimation(.easeOut(duration: 0.3)) {
+            splashOpacity = 0
+        }
+    }
+
+    private func scheduleSplashDismissal() {
+        // Ensure splash shows for at least 1 second if no connection
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            if case .connected = viewModel.connectionState { return }
+            dismissSplash()
         }
     }
 
