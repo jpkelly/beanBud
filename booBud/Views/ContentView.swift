@@ -83,8 +83,6 @@ struct ContentView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(8)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
             }
             .buttonStyle(.plain)
         }
