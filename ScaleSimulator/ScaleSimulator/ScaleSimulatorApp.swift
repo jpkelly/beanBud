@@ -713,7 +713,7 @@ struct ContentView: View {
 
             // Notification interval
             HStack(spacing: 8) {
-                Text("Update rate:")
+                Text("BLE update rate:")
                     .font(.caption)
                 Picker("", selection: $model.notificationInterval) {
                     Text("50ms").tag(0.05)
