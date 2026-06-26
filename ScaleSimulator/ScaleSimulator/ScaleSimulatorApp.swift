@@ -183,8 +183,14 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
     var displayFlow: Double = 0
 
     /// Called by slider callback — bypasses @Observable coalescing.
-    func setWeight(_ w: Double) { _weight = w }
-    func setFlow(_ f: Double) { _flow = f }
+    func setWeight(_ w: Double) {
+        _weight = w
+        sendWeightNotification()
+    }
+    func setFlow(_ f: Double) {
+        _flow = f
+        sendWeightNotification()
+    }
     private var setCount = 0
 
     // MARK: - Display Polling
