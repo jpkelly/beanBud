@@ -87,11 +87,13 @@ final class ScaleBLEController: NSObject, @unchecked Sendable {
         autoReconnectAttempted = false  // fresh scan resets reconnect gate
         logger.info("Scanning for Bookoo scales…")
 
+        // Scan for all peripherals (nil services) because the real Bookoo scale
+        // may not include the 0FFE service UUID in its advertisement data.
         // Allow duplicates so scan-response packets (carrying the local name)
-        // are delivered even when the primary ADV already matched withServices.
+        // are delivered even when the primary ADV already matched.
         discoveredNames.removeAll()
         centralManager.scanForPeripherals(
-            withServices: [BookooProtocol.serviceUUID],
+            withServices: nil,
             options: [CBCentralManagerScanOptionAllowDuplicatesKey: true]
         )
     }
@@ -175,9 +177,6 @@ final class ScaleBLEController: NSObject, @unchecked Sendable {
         sendCommand(BookooProtocol.resetTimerCommand())
     }
 
-    func sendMode(_ mode: BookooProtocol.ScaleMode) {
-        sendCommand(BookooProtocol.switchModeCommand(mode))
-    }
 }
 
 // MARK: - CBCentralManagerDelegate
@@ -219,6 +218,14 @@ extension ScaleBLEController: CBCentralManagerDelegate {
     ) {
         let rawPeripheralName = peripheral.name ?? ""
         let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? ""
+        let serviceUUIDs = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? []
+        let adServiceUUIDs = serviceUUIDs.map { $0.uuidString }.joined(separator: ", ")
+
+        logger.debug("""
+            Discovered: peripheral.name="\(rawPeripheralName)" \
+            localName="\(localName)" RSSI=\(RSSI) \
+            adServices=[\(adServiceUUIDs)]
+            """)
 
         // Accumulate best name per peripheral:
         // — prefer a non-empty LocalName from ad data (scan-response)
@@ -238,9 +245,12 @@ extension ScaleBLEController: CBCentralManagerDelegate {
             discoveredNames[id] = rawPeripheralName
         }
 
-        // Only show devices whose name starts with "BOOKOO"
-        let matchesPrefix = bestName.hasPrefix(BookooProtocol.advertisedNamePrefix)
-        guard matchesPrefix else { return }
+        // Only show devices whose name starts with "BOOKOO" (case-insensitive)
+        let matchesPrefix = bestName.uppercased().hasPrefix(BookooProtocol.advertisedNamePrefix.uppercased())
+        guard matchesPrefix else {
+            logger.debug("Skipping non-Bookoo device: \(bestName)")
+            return
+        }
         guard RSSI.compare(rssiThreshold) == .orderedDescending else { return }
 
         delegate?.scaleController(self, didDiscoverScale: peripheral, localName: bestName, rssi: RSSI)
@@ -269,6 +279,7 @@ extension ScaleBLEController: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         let wasUserInitiated = userInitiatedDisconnect
         userInitiatedDisconnect = false
+        let wasConnected = isConnected  // capture before clearing
 
         logger.info("Disconnected: \(error?.localizedDescription ?? "clean disconnect")")
         isConnected = false
@@ -276,8 +287,9 @@ extension ScaleBLEController: CBCentralManagerDelegate {
         connectedPeripheral = nil
         delegate?.scaleController(self, didChangeConnectionState: false)
 
-        // Auto-reconnect only for unexpected disconnects (sim powered off, out of range, etc.)
-        if !wasUserInitiated, !autoReconnectAttempted, let uuid = lastConnectedUUID {
+        // Only auto-reconnect if we had an established connection that dropped
+        // unexpectedly. Skip if we were never actually connected (failed attempt).
+        if wasConnected, !wasUserInitiated, !autoReconnectAttempted, let uuid = lastConnectedUUID {
             autoReconnectAttempted = true
             logger.info("🔄 Auto-reconnect attempt for \(uuid.uuidString.prefix(8))…")
             // Brief delay to let the peripheral stabilize before reconnecting

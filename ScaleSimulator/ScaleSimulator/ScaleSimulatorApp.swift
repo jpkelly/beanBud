@@ -20,12 +20,12 @@ struct ScaleSimulatorApp: App {
 // MARK: - BLE Identifiers (mirrors booBud's BookooProtocol)
 
 enum BookooBLE {
-    nonisolated(unsafe) static let serviceUUID = CBUUID(string: "FFE0")
+    nonisolated(unsafe) static let serviceUUID = CBUUID(string: "0FFE")
     nonisolated(unsafe) static let commandCharUUID = CBUUID(string: "FF12")
     nonisolated(unsafe) static let weightCharUUID = CBUUID(string: "FF11")
     nonisolated(unsafe) static let nameCharUUID = CBUUID(string: "FF1E")
-    static let fullServiceUUID = "0000FFE0-0000-1000-8000-00805F9B34FB"
-    static let advertisedName = "BOOKOO Mini"  // macOS uses hostname; this is for reference
+    static let fullServiceUUID = "00000FFE-0000-1000-8000-00805F9B34FB"
+    static let advertisedName = "BOOKOO Sim"  // macOS uses hostname; this is for FF1E name characteristic
 
     // Packet constants
     static let productNumber: UInt8 = 0x03
@@ -43,7 +43,6 @@ enum BookooBLE {
         case tareAndStartTimer = 0x07
         case flowSmoothing = 0x08
         case calibration = 0x09
-        case switchMode = 0x0A
         case stopCondition = 0x0B
 
         var description: String {
@@ -57,7 +56,6 @@ enum BookooBLE {
             case .tareAndStartTimer: return "Tare + Start Timer"
             case .flowSmoothing:     return "Flow Smoothing"
             case .calibration:       return "Calibration"
-            case .switchMode:        return "Switch Mode"
             case .stopCondition:     return "Stop Condition"
             }
         }
@@ -466,14 +464,6 @@ final class SimulatorModel: NSObject, @unchecked Sendable {
 
         case .calibration:
             log("⬅️ Calibration (data: \(data1), \(data2))")
-
-        case .switchMode:
-            if let newMode = BookooBLE.ScaleMode(rawValue: data1) {
-                mode = newMode
-                log("⬅️ Switch Mode → \(newMode.description)")
-            } else {
-                log("⬅️ Switch Mode → unknown 0x\(String(data1, radix: 16))")
-            }
 
         case .stopCondition:
             log("⬅️ Stop Condition (data: \(data1), \(data2))")

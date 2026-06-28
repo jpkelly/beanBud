@@ -4,28 +4,18 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var viewModel: ScaleViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showAbout = false
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Weight Unit") {
-                    Picker("Unit", selection: $viewModel.displayUnit) {
-                        ForEach(WeightUnit.allCases) { unit in
-                            Text(unit.symbol)
-                                .tag(unit)
-                        }
+                Section {
+                    HStack {
+                        Text("Scale Mode")
+                        Spacer()
+                        Text(viewModel.scaleMode.label)
+                            .foregroundStyle(.secondary)
                     }
-                    .pickerStyle(.segmented)
-                }
-
-                Section("Scale Mode") {
-                    Picker("Mode", selection: $viewModel.scaleMode) {
-                        ForEach(BookooProtocol.ScaleMode.allCases, id: \.rawValue) { mode in
-                            Text(mode.label)
-                                .tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
                 }
 
                 Section("Auto-Stop Timer") {
@@ -49,23 +39,34 @@ struct SettingsView: View {
 
                 Section("Pour Detection") {
                     Toggle("Auto-detect pour", isOn: $viewModel.autoDetectPour)
-                }
-
-                Section {
-                    HStack {
-                        Text("Battery")
-                        Spacer()
-                        Text("\(viewModel.batteryPercent)%")
-                            .foregroundStyle(.secondary)
+                    if viewModel.autoDetectPour {
+                        HStack {
+                            Text("Trigger at")
+                            Spacer()
+                            TextField("", value: $viewModel.pourTriggerGrams, format: .number)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 60)
+                            Text("g")
+                                .foregroundStyle(.secondary)
+                        }
+                        Slider(value: $viewModel.pourTriggerGrams, in: 0.1...1, step: 0.1) {
+                            Text("Grams")
+                        }
                     }
                 }
 
                 Section {
-                    HStack {
-                        Text("Version")
-                        Spacer()
-                        Text(versionString)
-                            .foregroundStyle(.secondary)
+                    Button {
+                        showAbout = true
+                    } label: {
+                        HStack {
+                            Text("Version")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(versionString)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -78,11 +79,35 @@ struct SettingsView: View {
             }
         }
         .presentationDetents([.large])
+        .fullScreenCover(isPresented: $showAbout) {
+            AboutView()
+        }
     }
 
     private var versionString: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
         return "\(version) (\(build))"
+    }
+}
+
+// MARK: - About View
+
+/// Full-screen splash-style about screen. Tap anywhere to dismiss.
+private struct AboutView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Color.black
+            Image("SplashImage")
+                .resizable()
+                .scaledToFit()
+        }
+        .ignoresSafeArea()
+        .contentShape(Rectangle())
+        .onTapGesture {
+            dismiss()
+        }
     }
 }

@@ -34,7 +34,11 @@ struct ContentView: View {
 
                 BrewTimerView(viewModel: viewModel)
 
-                WeightGraphView(data: viewModel.weightHistory, displayUnit: viewModel.displayUnit)
+                WeightGraphView(
+                    data: viewModel.weightHistory,
+                    flowData: viewModel.flowRateHistory,
+                    displayUnit: viewModel.displayUnit
+                )
                     .frame(height: 200)
                     .padding(.leading, 4)
                     .padding(.trailing, 16)

@@ -40,7 +40,6 @@ enum BookooProtocol {
         case tareAndStartTimer = 0x07
         case flowSmoothing    = 0x08
         case calibration      = 0x09
-        case switchMode       = 0x0A
         case stopCondition    = 0x0B
     }
 
@@ -118,11 +117,6 @@ enum BookooProtocol {
     /// Convenience: Reset the brew timer to zero.
     static func resetTimerCommand() -> Data {
         buildCommand(.resetTimer)
-    }
-
-    /// Convenience: Switch the scale's operating mode.
-    static func switchModeCommand(_ mode: ScaleMode) -> Data {
-        buildCommand(.switchMode, data1: mode.rawValue)
     }
 
     // MARK: - Weight Data Decoding

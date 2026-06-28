@@ -133,6 +133,7 @@ final class MockScaleProvider {
 
         let reading = WeightReading(
             grams: weightGrams,
+            flowRate: flowRate,
             isStable: !isPouring && abs(flowRate) < 0.1,
             timestamp: now
         )

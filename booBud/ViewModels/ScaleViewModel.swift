@@ -21,6 +21,9 @@ final class ScaleViewModel {
     /// Weight data points recorded while timer is running: (elapsed seconds, weight in grams).
     var weightHistory: [(elapsed: Double, weight: Double)] = []
 
+    /// Flow rate data points recorded while timer is running: (elapsed seconds, flow rate in g/s).
+    var flowRateHistory: [(elapsed: Double, flowRate: Double)] = []
+
     /// Auto-stop timer settings — stored properties synced to UserDefaults.
     var autoStopEnabled: Bool = UserDefaults.standard.bool(forKey: "autoStopEnabled") {
         didSet { UserDefaults.standard.set(autoStopEnabled, forKey: "autoStopEnabled") }
@@ -37,15 +40,20 @@ final class ScaleViewModel {
         didSet { UserDefaults.standard.set(autoDetectPour, forKey: "autoDetectPour") }
     }
 
-    /// Scale operating mode — persisted to UserDefaults, sent to scale on change.
+    /// Weight threshold in grams that triggers auto-start when crossed.
+    var pourTriggerGrams: Double = {
+        let val = UserDefaults.standard.double(forKey: "pourTriggerGrams")
+        return val > 0 ? val : 0.5
+    }() {
+        didSet { UserDefaults.standard.set(pourTriggerGrams, forKey: "pourTriggerGrams") }
+    }
+
+    /// Scale operating mode — persisted to UserDefaults for reference.
     var scaleMode: BookooProtocol.ScaleMode = {
         let raw = UserDefaults.standard.integer(forKey: "scaleMode")
         return BookooProtocol.ScaleMode(rawValue: UInt8(raw)) ?? .weight
     }() {
-        didSet {
-            UserDefaults.standard.set(Int(scaleMode.rawValue), forKey: "scaleMode")
-            bleController.sendMode(scaleMode)
-        }
+        didSet { UserDefaults.standard.set(Int(scaleMode.rawValue), forKey: "scaleMode") }
     }
 
     /// Whether the graph should be visible.
@@ -79,6 +87,17 @@ final class ScaleViewModel {
         case 51...75: return "battery.75"
         default:      return "battery.100"
         }
+    }
+
+    /// Whether a scale is remembered (stored UUID) but not currently connected.
+    var hasRememberedScale: Bool {
+        if case .connected = connectionState { return false }
+        return UserDefaults.standard.string(forKey: "lastPeripheralUUID") != nil
+    }
+
+    /// The name of the remembered scale, if any.
+    var rememberedScaleName: String {
+        UserDefaults.standard.string(forKey: "lastPeripheralName") ?? "Unknown Scale"
     }
 
     // MARK: - Private
@@ -162,6 +181,21 @@ final class ScaleViewModel {
         currentReading = nil
     }
 
+    /// Clear the stored peripheral so the next scan discovers fresh devices
+    /// instead of trying to reconnect to a previous scale.
+    func forgetDevice() {
+        disconnect()
+        UserDefaults.standard.removeObject(forKey: "lastPeripheralUUID")
+        UserDefaults.standard.removeObject(forKey: "lastPeripheralName")
+        // Ensure the view updates even if we weren't connected
+        if case .connected = connectionState {
+            // disconnect() already handles state transition
+        } else {
+            connectionState = .disconnected
+        }
+        logger.info("Forgotten stored device — next scan will be a fresh discovery")
+    }
+
     func tare() {
         bleController.sendTare()
         currentReading = nil
@@ -190,6 +224,7 @@ final class ScaleViewModel {
     func resetTimer() {
         brewTimer.reset()
         weightHistory.removeAll()
+        flowRateHistory.removeAll()
         stopDisplayTimer()
         bleController.sendResetTimer()
     }
@@ -206,11 +241,13 @@ final class ScaleViewModel {
             Task { @MainActor in
                 guard let self else { return }
                 self.brewTimer.tick()
-                // Sample current weight for graph
+                // Sample current weight and flow rate for graph
                 if let reading = self.currentReading {
                     self.weightHistory.append((elapsed: self.brewTimer.elapsed, weight: reading.grams))
+                    self.flowRateHistory.append((elapsed: self.brewTimer.elapsed, flowRate: reading.flowRate))
                 } else {
                     self.weightHistory.append((elapsed: self.brewTimer.elapsed, weight: 0))
+                    self.flowRateHistory.append((elapsed: self.brewTimer.elapsed, flowRate: 0))
                 }
                 // Auto-stop check
                 if self.autoStopEnabled && self.brewTimer.elapsed >= self.autoStopSeconds {
@@ -239,15 +276,17 @@ extension ScaleViewModel: ScaleBLEControllerDelegate {
         Task { @MainActor in
             let newReading = WeightReading(
                 grams: reading.weightGrams,
+                flowRate: reading.flowRate,
                 isStable: reading.isStable
             )
             self.currentReading = newReading
 
             // Auto-start timer when weight crosses threshold (if enabled)
+            let threshold = self.pourTriggerGrams
             if self.autoDetectPour,
                !self.brewTimer.isRunning,
-               newReading.grams >= 0.1,
-               self.lastAutoStartWeight < 0.1 {
+               newReading.grams >= threshold,
+               self.lastAutoStartWeight < threshold {
                 self.brewTimer.reset()
                 self.brewTimer.startOrResume()
                 self.startDisplayTimer()
@@ -265,6 +304,17 @@ extension ScaleViewModel: ScaleBLEControllerDelegate {
                 let name = self.connectedScaleName ?? self.bleController.connectedPeripheral?.name ?? "Scale"
                 self.connectionState = .connected(name)
             } else {
+                // If we were trying to reconnect (connecting state) and it failed,
+                // clear the stale UUID and fall back to scanning.
+                if case .connecting = self.connectionState {
+                    logger.info("Reconnect failed — clearing stored UUID and scanning for new devices")
+                    UserDefaults.standard.removeObject(forKey: "lastPeripheralUUID")
+                    UserDefaults.standard.removeObject(forKey: "lastPeripheralName")
+                    self.connectedScaleName = nil
+                    self.connectionState = .scanning
+                    self.bleController.startScanning()
+                    return
+                }
                 self.connectionState = .disconnected
                 self.currentReading = nil
                 self.batteryPercent = 0

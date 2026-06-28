@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// Real-time weight vs time line chart with axes, grid, and labels.
+/// Real-time weight + flow rate vs time line chart with dual Y-axes, grid, and labels.
 struct WeightGraphView: View {
     let data: [(elapsed: Double, weight: Double)]
+    let flowData: [(elapsed: Double, flowRate: Double)]
     let displayUnit: WeightUnit
 
     private let yTickCount = 4
@@ -10,15 +11,10 @@ struct WeightGraphView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Title
-            HStack {
-                Text("Weight")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                Text("(\(displayUnit.symbol))")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+            // Title / legend
+            HStack(spacing: 12) {
+                legendDot(color: .orange, label: "Weight")
+                legendDot(color: .cyan, label: "Flow")
                 Spacer()
                 Text("Time (s)")
                     .font(.caption)
@@ -32,15 +28,18 @@ struct WeightGraphView: View {
             GeometryReader { geometry in
                 let w = geometry.size.width
                 let h = geometry.size.height
-                let yAxisWidth: CGFloat = 42
+                let leftAxisWidth: CGFloat = 42
+                let rightAxisWidth: CGFloat = 42
                 let xAxisHeight: CGFloat = 18
-                let plotLeft = yAxisWidth
+                let plotLeft = leftAxisWidth
                 let plotTop: CGFloat = 0
-                let plotWidth = w - plotLeft
+                let plotWidth = w - plotLeft - rightAxisWidth
                 let plotHeight = h - xAxisHeight
                 let maxT = effectiveMaxTime
                 let maxW = effectiveMaxWeight
                 let rangeW = max(0.1, maxW)
+                let maxF = effectiveMaxFlow
+                let rangeF = max(0.1, maxF)
 
                 ZStack(alignment: .topLeading) {
                     // Grid lines
@@ -53,14 +52,24 @@ struct WeightGraphView: View {
                         .stroke(.secondary.opacity(0.15), lineWidth: 0.5)
                     }
 
-                    // Y-axis labels
+                    // Left Y-axis labels (Weight)
                     ForEach(0..<yTickCount, id: \.self) { i in
                         let value = maxW * Double(yTickCount - 1 - i) / Double(yTickCount - 1)
                         let y = plotTop + plotHeight * CGFloat(i) / CGFloat(yTickCount - 1)
                         Text(displayUnit.format(value))
                             .font(.system(size: 9))
-                            .foregroundStyle(.secondary)
-                            .position(x: yAxisWidth / 2, y: y)
+                            .foregroundStyle(.orange.opacity(0.8))
+                            .position(x: leftAxisWidth / 2, y: y)
+                    }
+
+                    // Right Y-axis labels (Flow rate)
+                    ForEach(0..<yTickCount, id: \.self) { i in
+                        let value = maxF * Double(yTickCount - 1 - i) / Double(yTickCount - 1)
+                        let y = plotTop + plotHeight * CGFloat(i) / CGFloat(yTickCount - 1)
+                        Text(String(format: "%.1f", value))
+                            .font(.system(size: 9))
+                            .foregroundStyle(.cyan.opacity(0.8))
+                            .position(x: plotLeft + plotWidth + rightAxisWidth / 2, y: y)
                     }
 
                     // X-axis labels
@@ -73,7 +82,20 @@ struct WeightGraphView: View {
                             .position(x: x, y: plotTop + plotHeight + xAxisHeight / 2)
                     }
 
-                    // Data line
+                    // Flow rate line (drawn first, behind weight)
+                    Path { path in
+                        guard flowData.count > 1 else { return }
+                        for (i, point) in flowData.enumerated() {
+                            let x = plotLeft + plotWidth * (maxT > 0 ? point.elapsed / maxT : 0)
+                            let y = plotTop + plotHeight * (1 - point.flowRate / rangeF)
+                            let pt = CGPoint(x: x, y: y)
+                            if i == 0 { path.move(to: pt) }
+                            else { path.addLine(to: pt) }
+                        }
+                    }
+                    .stroke(.cyan, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+
+                    // Weight line
                     Path { path in
                         guard data.count > 1 else { return }
                         for (i, point) in data.enumerated() {
@@ -98,12 +120,31 @@ struct WeightGraphView: View {
                         path.addLine(to: CGPoint(x: plotLeft, y: plotTop + plotHeight))
                     }
                     .stroke(.secondary.opacity(0.5), lineWidth: 0.5)
+
+                    // Right axis line
+                    Path { path in
+                        path.move(to: CGPoint(x: plotLeft + plotWidth, y: plotTop))
+                        path.addLine(to: CGPoint(x: plotLeft + plotWidth, y: plotTop + plotHeight))
+                    }
+                    .stroke(.secondary.opacity(0.5), lineWidth: 0.5)
                 }
             }
         }
         .padding(4)
-        .background(.ultraThinMaterial.opacity(0.2))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    // MARK: - Helpers
+
+    private func legendDot(color: Color, label: String) -> some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
     }
 
     private var effectiveMaxTime: Double {
@@ -118,6 +159,16 @@ struct WeightGraphView: View {
         if dataMax < 20 { return max(ceil10, 50) }
         if dataMax < 100 { return ceil50 }
         return ceil100
+    }
+
+    private var effectiveMaxFlow: Double {
+        let flowMax = flowData.map(\.flowRate).max() ?? 0
+        let flowMin = flowData.map(\.flowRate).min() ?? 0
+        let absMax = max(abs(flowMax), abs(flowMin))
+        if absMax < 1 { return 1 }
+        if absMax < 5 { return ceil(absMax) }
+        if absMax < 10 { return ceil(absMax / 2) * 2 }
+        return ceil(absMax / 5) * 5
     }
 
     private func formatTime(_ seconds: Double) -> String {

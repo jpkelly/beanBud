@@ -8,6 +8,27 @@ struct DeviceDiscoveryView: View {
     var body: some View {
         NavigationStack {
             List {
+                // Show remembered scale when not connected, so user can forget
+                // without having to connect first.
+                if viewModel.hasRememberedScale {
+                    Section("Paired Scale") {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(viewModel.rememberedScaleName)
+                                    .fontWeight(.medium)
+                                Text("Will auto-reconnect when in range")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Forget", role: .destructive) {
+                                viewModel.forgetDevice()
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                }
+
                 switch viewModel.connectionState {
                 case .scanning:
                     Section("Nearby Scales") {
@@ -32,6 +53,17 @@ struct DeviceDiscoveryView: View {
                                 viewModel.disconnect()
                             }
                             .buttonStyle(.bordered)
+                        }
+                        Button(role: .destructive) {
+                            viewModel.forgetDevice()
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Text("Forget Scale")
+                                Spacer()
+                                Image(systemName: "trash")
+                                    .font(.caption)
+                            }
                         }
                     }
 
